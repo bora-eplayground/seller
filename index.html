@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>가상 쇼핑몰 체험</title>
+  <style>
+    :root {
+      --bg: #FFD1DC;
+      --text: #9370DB;
+      --cyan: #00FFFF;
+      --hotpink: #FF69B4;
+      --white: #fffdfd;
+      --card: rgba(255,255,255,0.78);
+      --shadow: 0 10px 25px rgba(147,112,219,0.18);
+      --border: 3px solid rgba(255,255,255,0.9);
+      --soft-border: 2px solid rgba(147,112,219,0.18);
+      --badge1: #FFD700;
+      --badge2: #C0C0C0;
+      --badge3: #CD7F32;
+      --danger: #ff5a8f;
+      --success: #49c979;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,0.55) 0 80px, transparent 81px),
+        radial-gradient(circle at 90% 10%, rgba(0,255,255,0.25) 0 60px, transparent 61px),
+        radial-gradient(circle at 20% 90%, rgba(255,105,180,0.20) 0 80px, transparent 81px),
+        linear-gradient(180deg, #ffdbe5 0%, #ffd1dc 40%, #ffe6ef 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .decor {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .decor span {
+      position: absolute;
+      font-size: 22px;
+      opacity: 0.55;
+      filter: drop-shadow(0 2px 4px rgba(255,255,255,0.8));
+      animation: floaty 8s ease-in-out infinite;
+    }
+
+    .decor span:nth-child(1) { top: 5%; left: 3%; }
+    .decor span:nth-child(2) { top: 12%; right: 5%; animation-delay: 1s; }
+    .decor span:nth-child(3) { top: 35%; left: 6%; animation-delay: 2s; }
+    .decor span:nth-child(4) { top: 46%; right: 10%; animation-delay: 3s; }
+    .decor span:nth-child(5) { top: 70%; left: 4%; animation-delay: 4s; }
+    .decor span:nth-child(6) { top: 78%; right: 7%; animation-delay: 1.5s; }
+    .decor span:nth-child(7) { top: 24%; left: 48%; animation-delay: 2.5s; }
+    .decor span:nth-child(8) { top: 88%; left: 45%; animation-delay: 5s; }
+
+    @keyframes floaty {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(4deg); }
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      background: linear-gradient(135deg, rgba(255,255,255,0.88), rgba(255,255,255,0.74));
+      border: var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 24px;
+      padding: 14px 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+    }
+
+    .brand .icon {
+      font-size: 28px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .credit-chip, .role-chip, .cart-chip {
+      background: rgba(255,255,255,0.85);
+      border: var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .page {
+      display: none;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero, .panel, .card, .stat-card, .product-card, .cart-item, .summary-card {
+      background: var(--card);
+      backdrop-filter: blur(8px);
+      border: var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 36px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 1.15;
+      color: var(--text);
+      text-shadow: 2px 2px 0 rgba(255,255,255,0.8);
+    }
+
+    .hero p {
+      margin: 0 auto 24px;
+      max-width: 760px;
+      font-size: 1.05rem;
+      color: #7f66bf;
+      font-weight: 700;
+    }
+
+    .hero-stickers {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      font-size: 28px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 14px 20px;
+      cursor: pointer;
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: var(--text);
+      transition: 0.2s ease;
+      box-shadow: 0 6px 0 rgba(147,112,219,0.18);
+      background: linear-gradient(180deg, #ffffff, #ffe9f1);
+      border: 3px solid rgba(255,255,255,0.9);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 3px 0 rgba(147,112,219,0.18);
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, #ffffff, #e6fbff);
+    }
+
+    .btn-pink {
+      background: linear-gradient(180deg, #fff1f8, #ffd7ea);
+      color: #b84c88;
+    }
+
+    .btn-cyan {
+      background: linear-gradient(180deg, #f0ffff, #d8ffff);
+      color: #4a8eaa;
+    }
+
+    .btn-danger {
+      background: linear-gradient(180deg, #ffe6ee, #ffbfd2);
+      color: #b13d6f;
+    }
+
+    .btn-success {
+      background: linear-gradient(180deg, #effff3, #d3ffe0);
+      color: #2f8f59;
+    }
+
+    .btn[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 16px;
+      flex-wrap: wrap;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 1.8rem;
+      text-shadow: 2px 2px 0 rgba(255,255,255,0.8);
+    }
+
+    .section-title .sub {
+      font-weight: 700;
+      color: #7f66bf;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 20px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card .emoji {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 24px;
+      opacity: 0.6;
+    }
+
+    .stat-label {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #7f66bf;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .mini-note {
+      background: rgba(255,255,255,0.78);
+      border: var(--soft-border);
+      border-radius: 20px;
+      padding: 14px;
+      font-weight: 700;
+      color: #7f66bf;
+    }
+
+    .ranking-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .rank-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.7);
+      border: var(--soft-border);
+    }
+
+    .rank-badge {
+      min-width: 56px;
+      text-align: center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+      color: white;
+      font-size: 0.92rem;
+    }
+
+    .rank-1 { background: linear-gradient(180deg, #ffdf70, #ffbb00); }
+    .rank-2 { background: linear-gradient(180deg, #dfdfdf, #b7b7b7); }
+    .rank-3 { background: linear-gradient(180deg, #dfab7f, #b77743); }
+
+    .rank-thumb {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.9);
+      background: #fff;
+    }
+
+    .rank-info {
+      flex: 1;
+    }
+
+    .rank-name {
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .rank-meta {
+      font-size: 0.92rem;
+      color: #7f66bf;
+      font-weight: 700;
+    }
+
+    form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 800;
+      color: #7f66bf;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border-radius: 18px;
+      border: 2px solid rgba(147,112,219,0.22);
+      padding: 12px 14px;
+      font: inherit;
+      background: rgba(255,255,255,0.85);
+      color: var(--text);
+      outline: none;
+    }
+
+    .field textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .product-card {
+      padding: 16px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 100%;
+    }
+
+    .thumb-wrap {
+      position: relative;
+      border-radius: 22px;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,240,246,0.95));
+      min-height: 210px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid rgba(255,255,255,0.95);
+    }
+
+    .product-thumb {
+      width: 100%;
+      height: 210px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .thumb-placeholder {
+      font-size: 64px;
+      opacity: 0.7;
+    }
+
+    .top-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: white;
+      font-weight: 900;
+      font-size: 0.92rem;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+      z-index: 2;
+    }
+
+    .badge-1 { background: linear-gradient(180deg, #ffdf70, #ffbb00); }
+    .badge-2 { background: linear-gradient(180deg, #dfdfdf, #b7b7b7); }
+    .badge-3 { background: linear-gradient(180deg, #dfab7f, #b77743); }
+
+    .product-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .product-desc {
+      color: #7f66bf;
+      font-weight: 700;
+      line-height: 1.5;
+      font-size: 0.96rem;
+      min-height: 44px;
+    }
+
+    .product-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .meta-pill {
+      background: rgba(255,255,255,0.88);
+      border: var(--soft-border);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: auto;
+    }
+
+    .cart-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cart-item {
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 90px 1fr auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .cart-item img {
+      width: 90px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 18px;
+      border: 3px solid rgba(255,255,255,0.95);
+      background: #fff;
+    }
+
+    .cart-item .placeholder {
+      width: 90px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      border-radius: 18px;
+      border: 3px solid rgba(255,255,255,0.95);
+      background: #fff;
+    }
+
+    .cart-item h4 {
+      margin: 0 0 8px;
+      font-size: 1.08rem;
+    }
+
+    .cart-item p {
+      margin: 4px 0;
+      color: #7f66bf;
+      font-weight: 700;
+    }
+
+    .qty-box {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .qty-value {
+      min-width: 34px;
+      text-align: center;
+      font-weight: 900;
+      font-size: 1.05rem;
+    }
+
+    .summary-card {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-weight: 800;
+      color: #7f66bf;
+    }
+
+    .summary-row strong {
+      color: var(--text);
+    }
+
+    .empty-state {
+      padding: 32px;
+      text-align: center;
+      font-weight: 800;
+      color: #7f66bf;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.62);
+      border: var(--soft-border);
+    }
+
+    .message {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 360px;
+      z-index: 99;
+      background: rgba(255,255,255,0.96);
+      border: 3px solid rgba(255,255,255,0.95);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+      padding: 14px 16px;
+      font-weight: 800;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+      animation: fadeUp 0.2s ease;
+    }
+
+    .success-text { color: var(--success); }
+    .danger-text { color: var(--danger); }
+
+    .small {
+      font-size: 0.9rem;
+      color: #7f66bf;
+      font-weight: 700;
+    }
+
+    .completed-box {
+      text-align: center;
+      padding: 32px 22px;
+    }
+
+    .completed-box .big {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .completed-box h2 {
+      margin: 0 0 10px;
+      font-size: 2rem;
+    }
+
+    .completed-box p {
+      margin: 0 auto 18px;
+      max-width: 680px;
+      color: #7f66bf;
+      font-weight: 700;
+    }
+
+    .tagline {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.85);
+      border: var(--soft-border);
+      font-size: 0.92rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 980px) {
+      .grid-2, .grid-3, .grid-4, .stats, .product-grid, .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cart-item {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .cart-item img,
+      .cart-item .placeholder {
+        margin: 0 auto;
+      }
+
+      .summary-row {
+        font-size: 0.96rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="decor">
+    <span>⭐</span>
+    <span>💖</span>
+    <span>🦄</span>
+    <span>🌈</span>
+    <span>🎀</span>
+    <span>💎</span>
+    <span>🍭</span>
+    <span>✨</span>
+  </div>
+
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <span class="icon">🛍️</span>
+        <span>가상 쇼핑몰 체험</span>
+      </div>
+
+      <div class="top-actions">
+        <div class="role-chip" id="roleChip">역할: 홈</div>
+        <div class="credit-chip" id="creditChip">크래딧: 10,000</div>
+        <div class="cart-chip" id="cartChip">장바구니: 0개</div>
+        <button class="btn btn-pink" onclick="goHome()">홈</button>
+      </div>
+    </div>
+
+    <!-- 시작 페이지 -->
+    <section class="page active" id="homePage">
+      <div class="hero">
+        <div class="hero-stickers">
+          <span>💖</span><span>🛒</span><span>🌈</span><span>⭐</span><span>🦄</span>
+        </div>
+        <div class="tagline">Kawaii · Pastel · Sticker</div>
+        <h1>가상 쇼핑몰 체험에 오신 것을 환영합니다</h1>
+        <p>
+          구매자는 10,000 크래딧으로 쇼핑하고, 셀러는 상품을 등록하고 판매 현황을 확인할 수 있습니다.
+          모의 온라인 판매를 쉽고 재미있게 체험해보세요.
+        </p>
+
+        <div class="button-row">
+          <button class="btn btn-primary" onclick="enterBuyer()">구매자로 시작</button>
+          <button class="btn btn-cyan" onclick="enterSeller()">셀러로 시작</button>
+        </div>
+
+        <div style="margin-top: 28px;" class="grid-3">
+          <div class="stat-card">
+            <div class="emoji">🧁</div>
+            <div class="stat-label">현재 등록 상품 수</div>
+            <div class="stat-value" id="homeProductCount">0개</div>
+          </div>
+          <div class="stat-card">
+            <div class="emoji">📦</div>
+            <div class="stat-label">전체 판매 수량</div>
+            <div class="stat-value" id="homeSoldCount">0개</div>
+          </div>
+          <div class="stat-card">
+            <div class="emoji">💰</div>
+            <div class="stat-label">전체 판매 금액</div>
+            <div class="stat-value" id="homeRevenue">0 크래딧</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 셀러 관리자 페이지 -->
+    <section class="page" id="sellerDashboardPage">
+      <div class="section-title">
+        <h2>셀러 관리자 페이지</h2>
+        <div class="sub">상품 관리와 판매 현황을 한눈에 확인할 수 있습니다</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="emoji">🧸</div>
+          <div class="stat-label">등록 상품 수</div>
+          <div class="stat-value" id="sellerProductCount">0개</div>
+        </div>
+        <div class="stat-card">
+          <div class="emoji">🎉</div>
+          <div class="stat-label">총 판매 개수</div>
+          <div class="stat-value" id="sellerSoldCount">0개</div>
+        </div>
+        <div class="stat-card">
+          <div class="emoji">💎</div>
+          <div class="stat-label">총 판매 금액</div>
+          <div class="stat-value" id="sellerRevenue">0 크래딧</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="section-title">
+            <h3 style="margin:0;">인기 상품 TOP 3</h3>
+            <span class="small">판매량 기준 자동 정렬</span>
+          </div>
+          <div id="sellerTop3List" class="ranking-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="section-title">
+            <h3 style="margin:0;">빠른 메뉴</h3>
+            <span class="small">원하는 작업을 선택하세요</span>
+          </div>
+
+          <div class="button-row" style="justify-content:flex-start;">
+            <button class="btn btn-primary" onclick="showPage('productManagePage')">상품 등록 / 관리</button>
+            <button class="btn btn-cyan" onclick="openBuyerPreview()">구매자 화면 보기</button>
+            <button class="btn btn-danger" onclick="resetAll()">전체 초기화</button>
+          </div>
+
+          <div style="margin-top: 18px;" class="mini-note">
+            💡 구매가 완료될 때마다 상품 판매량이 자동으로 반영되고,
+            구매자 상품 목록은 <strong>판매량 높은 순</strong>으로 다시 정렬됩니다.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 상품 등록/관리 페이지 -->
+    <section class="page" id="productManagePage">
+      <div class="section-title">
+        <h2>상품 등록 / 관리</h2>
+        <div class="sub">상품을 등록하고 수정하거나 삭제할 수 있습니다</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <form id="productForm">
+            <input type="hidden" id="editingProductId" />
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="productName">상품명</label>
+                <input type="text" id="productName" placeholder="예: 딸기 쿠키" />
+              </div>
+              <div class="field">
+                <label for="productPrice">가격 (크래딧)</label>
+                <input type="number" id="productPrice" placeholder="예: 1500" min="1" />
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="productStock">재고 수량</label>
+                <input type="number" id="productStock" placeholder="예: 10" min="0" />
+              </div>
+              <div class="field">
+                <label for="productImage">상품 이미지</label>
+                <input type="file" id="productImage" accept="image/*" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="productDesc">상품 설명</label>
+              <textarea id="productDesc" placeholder="상품 소개를 적어주세요"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-success" id="submitProductBtn">상품 등록</button>
+              <button type="button" class="btn btn-pink" onclick="clearProductForm()">취소</button>
+              <button type="button" class="btn btn-cyan" onclick="showPage('sellerDashboardPage')">관리자 홈으로</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="section-title">
+            <h3 style="margin:0;">등록된 상품 목록</h3>
+            <span class="small">현재 저장된 상품을 확인할 수 있습니다</span>
+          </div>
+          <div id="manageProductList" class="cart-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 구매자 상품 목록 페이지 -->
+    <section class="page" id="buyerPage">
+      <div class="section-title">
+        <h2>구매자 쇼핑 페이지</h2>
+        <div class="sub">인기 순으로 정렬된 상품을 장바구니에 담아보세요</div>
+      </div>
+
+      <div class="button-row" style="justify-content:flex-start; margin-bottom: 18px;">
+        <button class="btn btn-primary" onclick="showPage('cartPage')">장바구니 보기</button>
+      </div>
+
+      <div id="buyerProductList" class="product-grid"></div>
+    </section>
+
+    <!-- 장바구니 페이지 -->
+    <section class="page" id="cartPage">
+      <div class="section-title">
+        <h2>장바구니</h2>
+        <div class="sub">수량을 조절하고 구매를 완료해보세요</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div id="cartList" class="cart-list"></div>
+        </div>
+
+        <div class="summary-card">
+          <div class="section-title">
+            <h3 style="margin:0;">결제 정보</h3>
+            <span class="small">구매 전에 금액을 확인하세요</span>
+          </div>
+
+          <div class="summary-row">
+            <span>현재 보유 크래딧</span>
+            <strong id="summaryCredit">0 크래딧</strong>
+          </div>
+          <div class="summary-row">
+            <span>총 결제 금액</span>
+            <strong id="summaryTotal">0 크래딧</strong>
+          </div>
+          <div class="summary-row">
+            <span>결제 후 예상 잔액</span>
+            <strong id="summaryAfter">0 크래딧</strong>
+          </div>
+
+          <div class="button-row" style="justify-content:flex-start; margin-top: 8px;">
+            <button class="btn btn-pink" onclick="showPage('buyerPage')">계속 쇼핑</button>
+            <button class="btn btn-success" onclick="checkout()">구매하기</button>
+            <button class="btn btn-danger" onclick="clearCart()">장바구니 비우기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 구매 완료 페이지 -->
+    <section class="page" id="completePage">
+      <div class="panel completed-box">
+        <div class="big">🎉</div>
+        <h2>구매가 완료되었습니다</h2>
+        <p>
+          상품 구매가 정상적으로 완료되었습니다. 아래에서 이번 구매 내용을 확인하실 수 있습니다.
+        </p>
+
+        <div class="grid-3" style="margin-top: 20px;">
+          <div class="stat-card">
+            <div class="emoji">🛍️</div>
+            <div class="stat-label">구매 상품 수</div>
+            <div class="stat-value" id="completeItemCount">0개</div>
+          </div>
+          <div class="stat-card">
+            <div class="emoji">💸</div>
+            <div class="stat-label">총 사용 금액</div>
+            <div class="stat-value" id="completeTotalSpent">0 크래딧</div>
+          </div>
+          <div class="stat-card">
+            <div class="emoji">💖</div>
+            <div class="stat-label">남은 크래딧</div>
+            <div class="stat-value" id="completeRemainingCredit">0 크래딧</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top: 20px; text-align:left;">
+          <div class="section-title">
+            <h3 style="margin:0;">이번에 구매한 상품</h3>
+            <span class="small">구매 완료 목록</span>
+          </div>
+          <div id="completeItems"></div>
+        </div>
+
+        <div class="button-row" style="margin-top: 20px;">
+          <button class="btn btn-primary" onclick="showPage('buyerPage')">쇼핑 계속하기</button>
+          <button class="btn btn-cyan" onclick="goHome()">홈으로 가기</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="messageBox" class="message"></div>
+
+  <script>
+    const STORAGE_KEYS = {
+      products: "kawaii_shop_products",
+      cart: "kawaii_shop_cart",
+      buyer: "kawaii_shop_buyer",
+      lastPurchase: "kawaii_shop_last_purchase"
+    };
+
+    const DEFAULT_CREDIT = 10000;
+    let tempImageData = "";
+
+    function init() {
+      if (!localStorage.getItem(STORAGE_KEYS.products)) {
+        localStorage.setItem(STORAGE_KEYS.products, JSON.stringify(seedProducts()));
+      }
+
+      if (!localStorage.getItem(STORAGE_KEYS.cart)) {
+        localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify([]));
+      }
+
+      if (!localStorage.getItem(STORAGE_KEYS.buyer)) {
+        localStorage.setItem(STORAGE_KEYS.buyer, JSON.stringify({ credit: DEFAULT_CREDIT }));
+      }
+
+      bindImageUpload();
+      renderAll();
+    }
+
+    function seedProducts() {
+      return [
+        {
+          id: createId(),
+          name: "딸기 쿠키",
+          price: 1500,
+          stock: 10,
+          desc: "달콤한 딸기 향이 가득한 인기 쿠키예요.",
+          image: "",
+          soldCount: 0,
+          revenue: 0,
+          createdAt: Date.now()
+        },
+        {
+          id: createId(),
+          name: "유니콘 키링",
+          price: 2200,
+          stock: 8,
+          desc: "반짝반짝 귀여운 유니콘 키링이에요.",
+          image: "",
+          soldCount: 0,
+          revenue: 0,
+          createdAt: Date.now() + 1
+        }
+      ];
+    }
+
+    function createId() {
+      return "id_" + Math.random().toString(36).slice(2) + Date.now();
+    }
+
+    function getProducts() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.products) || "[]");
+    }
+
+    function setProducts(products) {
+      localStorage.setItem(STORAGE_KEYS.products, JSON.stringify(products));
+    }
+
+    function getCart() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.cart) || "[]");
+    }
+
+    function setCart(cart) {
+      localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart));
+    }
+
+    function getBuyer() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.buyer) || JSON.stringify({ credit: DEFAULT_CREDIT }));
+    }
+
+    function setBuyer(buyer) {
+      localStorage.setItem(STORAGE_KEYS.buyer, JSON.stringify(buyer));
+    }
+
+    function setLastPurchase(data) {
+      localStorage.setItem(STORAGE_KEYS.lastPurchase, JSON.stringify(data));
+    }
+
+    function getLastPurchase() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.lastPurchase) || "null");
+    }
+
+    function formatNumber(n) {
+      return Number(n).toLocaleString("ko-KR");
+    }
+
+    function getSortedProducts() {
+      const products = [...getProducts()];
+      return products.sort((a, b) => {
+        if (b.soldCount !== a.soldCount) return b.soldCount - a.soldCount;
+        return a.createdAt - b.createdAt;
+      });
+    }
+
+    function getStats() {
+      const products = getProducts();
+      const productCount = products.length;
+      const soldCount = products.reduce((sum, p) => sum + (p.soldCount || 0), 0);
+      const revenue = products.reduce((sum, p) => sum + (p.revenue || 0), 0);
+      return { productCount, soldCount, revenue };
+    }
+
+    function bindImageUpload() {
+      const input = document.getElementById("productImage");
+      input.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+          tempImageData = "";
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          tempImageData = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById("productForm").addEventListener("submit", handleProductSubmit);
+    }
+
+    function showMessage(message, type = "info") {
+      const box = document.getElementById("messageBox");
+      box.textContent = message;
+      box.className = "message show";
+      if (type === "success") box.classList.add("success-text");
+      if (type === "danger") box.classList.add("danger-text");
+
+      setTimeout(() => {
+        box.className = "message";
+      }, 2200);
+    }
+
+    function showPage(pageId) {
+      document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+      document.getElementById(pageId).classList.add("active");
+      updateRoleChip(pageId);
+      renderAll();
+    }
+
+    function updateRoleChip(pageId) {
+      const roleChip = document.getElementById("roleChip");
+      if (pageId === "sellerDashboardPage" || pageId === "productManagePage") {
+        roleChip.textContent = "역할: 셀러";
+      } else if (pageId === "buyerPage" || pageId === "cartPage" || pageId === "completePage") {
+        roleChip.textContent = "역할: 구매자";
+      } else {
+        roleChip.textContent = "역할: 홈";
+      }
+    }
+
+    function goHome() {
+      showPage("homePage");
+    }
+
+    function enterBuyer() {
+      const buyer = getBuyer();
+      if (buyer.credit == null) {
+        setBuyer({ credit: DEFAULT_CREDIT });
+      }
+      showPage("buyerPage");
+    }
+
+    function enterSeller() {
+      showPage("sellerDashboardPage");
+    }
+
+    function openBuyerPreview() {
+      showPage("buyerPage");
+    }
+
+    function renderAll() {
+      renderHeaderInfo();
+      renderHomeStats();
+      renderSellerDashboard();
+      renderManageProductList();
+      renderBuyerProducts();
+      renderCart();
+      renderCompletePage();
+    }
+
+    function renderHeaderInfo() {
+      const buyer = getBuyer();
+      const cart = getCart();
+      const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+      document.getElementById("creditChip").textContent = `크래딧: ${formatNumber(buyer.credit)}`
+      document.getElementById("cartChip").textContent = `장바구니: ${cartCount}개`;
+    }
+
+    function renderHomeStats() {
+      const stats = getStats();
+      document.getElementById("homeProductCount").textContent = `${formatNumber(stats.productCount)}개`;
+      document.getElementById("homeSoldCount").textContent = `${formatNumber(stats.soldCount)}개`;
+      document.getElementById("homeRevenue").textContent = `${formatNumber(stats.revenue)} 크래딧`;
+    }
+
+    function renderSellerDashboard() {
+      const stats = getStats();
+      document.getElementById("sellerProductCount").textContent = `${formatNumber(stats.productCount)}개`;
+      document.getElementById("sellerSoldCount").textContent = `${formatNumber(stats.soldCount)}개`;
+      document.getElementById("sellerRevenue").textContent = `${formatNumber(stats.revenue)} 크래딧`;
+
+      const top3Container = document.getElementById("sellerTop3List");
+      top3Container.innerHTML = "";
+
+      const top3 = getSortedProducts().slice(0, 3);
+
+      if (top3.length === 0) {
+        top3Container.innerHTML = `<div class="empty-state">아직 등록된 상품이 없습니다.</div>`;
+        return;
+      }
+
+      top3.forEach((product, index) => {
+        const rank = index + 1;
+        const item = document.createElement("div");
+        item.className = "rank-item";
+        item.innerHTML = `
+          <div class="rank-badge rank-${rank}">${rank}위</div>
+          ${product.image
+            ? `<img src="${product.image}" alt="${product.name}" class="rank-thumb">`
+            : `<div class="rank-thumb" style="display:flex;align-items:center;justify-content:center;font-size:24px;">🛍️</div>`
+          }
+          <div class="rank-info">
+            <div class="rank-name">${product.name}</div>
+            <div class="rank-meta">판매량 ${formatNumber(product.soldCount)}개 · 판매금액 ${formatNumber(product.revenue)} 크래딧</div>
+          </div>
+        `;
+        top3Container.appendChild(item);
+      });
+    }
+
+    function handleProductSubmit(e) {
+      e.preventDefault();
+
+      const editingId = document.getElementById("editingProductId").value;
+      const name = document.getElementById("productName").value.trim();
+      const price = Number(document.getElementById("productPrice").value);
+      const stock = Number(document.getElementById("productStock").value);
+      const desc = document.getElementById("productDesc").value.trim();
+
+      if (!name) {
+        showMessage("상품명을 입력해주세요.", "danger");
+        return;
+      }
+      if (!price || price < 1) {
+        showMessage("가격은 1 이상으로 입력해주세요.", "danger");
+        return;
+      }
+      if (stock < 0 || Number.isNaN(stock)) {
+        showMessage("재고 수량을 올바르게 입력해주세요.", "danger");
+        return;
+      }
+
+      const products = getProducts();
+
+      if (editingId) {
+        const index = products.findIndex(p => p.id === editingId);
+        if (index > -1) {
+          const prev = products[index];
+          products[index] = {
+            ...prev,
+            name,
+            price,
+            stock,
+            desc,
+            image: tempImageData || prev.image || ""
+          };
+          setProducts(products);
+          showMessage("상품이 수정되었습니다.", "success");
+        }
+      } else {
+        products.push({
+          id: createId(),
+          name,
+          price,
+          stock,
+          desc,
+          image: tempImageData || "",
+          soldCount: 0,
+          revenue: 0,
+          createdAt: Date.now()
+        });
+        setProducts(products);
+        showMessage("상품이 등록되었습니다.", "success");
+      }
+
+      clearProductForm();
+      renderAll();
+    }
+
+    function clearProductForm() {
+      document.getElementById("editingProductId").value = "";
+      document.getElementById("productName").value = "";
+      document.getElementById("productPrice").value = "";
+      document.getElementById("productStock").value = "";
+      document.getElementById("productDesc").value = "";
+      document.getElementById("productImage").value = "";
+      document.getElementById("submitProductBtn").textContent = "상품 등록";
+      tempImageData = "";
+    }
+
+    function editProduct(id) {
+      const product = getProducts().find(p => p.id === id);
+      if (!product) return;
+
+      document.getElementById("editingProductId").value = product.id;
+      document.getElementById("productName").value = product.name;
+      document.getElementById("productPrice").value = product.price;
+      document.getElementById("productStock").value = product.stock;
+      document.getElementById("productDesc").value = product.desc || "";
+      document.getElementById("submitProductBtn").textContent = "수정 완료";
+      tempImageData = product.image || "";
+
+      showPage("productManagePage");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function deleteProduct(id) {
+      const ok = confirm("해당 상품을 삭제하시겠습니까?");
+      if (!ok) return;
+
+      const products = getProducts().filter(p => p.id !== id);
+      setProducts(products);
+
+      const cart = getCart().filter(item => item.productId !== id);
+      setCart(cart);
+
+      renderAll();
+      showMessage("상품이 삭제되었습니다.", "success");
+    }
+
+    function renderManageProductList() {
+      const list = document.getElementById("manageProductList");
+      const products = getSortedProducts();
+
+      list.innerHTML = "";
+
+      if (products.length === 0) {
+        list.innerHTML = `<div class="empty-state">등록된 상품이 없습니다. 왼쪽 폼에서 상품을 추가해보세요.</div>`;
+        return;
+      }
+
+      products.forEach((product) => {
+        const item = document.createElement("div");
+        item.className = "cart-item";
+        item.innerHTML = `
+          ${product.image
+            ? `<img src="${product.image}" alt="${product.name}" />`
+            : `<div class="placeholder">🧁</div>`
+          }
+          <div>
+            <h4>${product.name}</h4>
+            <p>가격: ${formatNumber(product.price)} 크래딧</p>
+            <p>재고: ${formatNumber(product.stock)}개</p>
+            <p>판매량: ${formatNumber(product.soldCount)}개</p>
+          </div>
+          <div class="button-row" style="justify-content:flex-end;">
+            <button class="btn btn-primary" onclick="editProduct('${product.id}')">수정</button>
+            <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">삭제</button>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function getTopBadge(rankIndex) {
+      if (rankIndex === 0) return `<div class="top-badge badge-1">🥇 1위</div>`;
+      if (rankIndex === 1) return `<div class="top-badge badge-2">🥈 2위</div>`;
+      if (rankIndex === 2) return `<div class="top-badge badge-3">🥉 3위</div>`;
+      return "";
+    }
+
+    function renderBuyerProducts() {
+      const container = document.getElementById("buyerProductList");
+      const products = getSortedProducts();
+
+      container.innerHTML = "";
+
+      if (products.length === 0) {
+        container.innerHTML = `<div class="empty-state">아직 판매 중인 상품이 없습니다.</div>`;
+        return;
+      }
+
+      products.forEach((product, index) => {
+        const soldOut = product.stock <= 0;
+        const card = document.createElement("div");
+        card.className = "product-card";
+
+        card.innerHTML = `
+          <div class="thumb-wrap">
+            ${index < 3 ? getTopBadge(index) : ""}
+            ${product.image
+              ? `<img src="${product.image}" alt="${product.name}" class="product-thumb" />`
+              : `<div class="thumb-placeholder">🦄</div>`
+            }
+          </div>
+
+          <h3 class="product-title">${product.name}</h3>
+          <div class="product-desc">${product.desc || "귀엽고 특별한 상품이에요."}</div>
+
+          <div class="product-meta">
+            <div class="meta-pill">가격 ${formatNumber(product.price)} 크래딧</div>
+            <div class="meta-pill">재고 ${formatNumber(product.stock)}개</div>
+            <div class="meta-pill">판매 ${formatNumber(product.soldCount)}개</div>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn ${soldOut ? 'btn-danger' : 'btn-primary'}" ${soldOut ? "disabled" : ""} onclick="addToCart('${product.id}')">
+              ${soldOut ? "품절" : "장바구니 담기"}
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function addToCart(productId) {
+      const products = getProducts();
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      if (product.stock <= 0) {
+        showMessage("품절된 상품입니다.", "danger");
+        return;
+      }
+
+      const cart = getCart();
+      const found = cart.find(item => item.productId === productId);
+
+      const currentQty = found ? found.quantity : 0;
+      if (currentQty + 1 > product.stock) {
+        showMessage("재고 수량보다 많이 담을 수 없습니다.", "danger");
+        return;
+      }
+
+      if (found) {
+        found.quantity += 1;
+      } else {
+        cart.push({ productId, quantity: 1 });
+      }
+
+      setCart(cart);
+      renderAll();
+      showMessage("장바구니에 담았습니다.", "success");
+    }
+
+    function renderCart() {
+      const cartList = document.getElementById("cartList");
+      const cart = getCart();
+      const products = getProducts();
+      const buyer = getBuyer();
+
+      cartList.innerHTML = "";
+
+      if (cart.length === 0) {
+        cartList.innerHTML = `<div class="empty-state">장바구니가 비어 있습니다.</div>`;
+      } else {
+        cart.forEach(item => {
+          const product = products.find(p => p.id === item.productId);
+          if (!product) return;
+
+          const el = document.createElement("div");
+          el.className = "cart-item";
+          el.innerHTML = `
+            ${product.image
+              ? `<img src="${product.image}" alt="${product.name}" />`
+              : `<div class="placeholder">🎀</div>`
+            }
+            <div>
+              <h4>${product.name}</h4>
+              <p>가격: ${formatNumber(product.price)} 크래딧</p>
+              <p>소계: ${formatNumber(product.price * item.quantity)} 크래딧</p>
+              <p>남은 재고: ${formatNumber(product.stock)}개</p>
+              <div class="qty-box">
+                <button class="btn btn-pink" onclick="changeCartQuantity('${product.id}', -1)">-</button>
+                <span class="qty-value">${item.quantity}</span>
+                <button class="btn btn-cyan" onclick="changeCartQuantity('${product.id}', 1)">+</button>
+                <button class="btn btn-danger" onclick="removeCartItem('${product.id}')">삭제</button>
+              </div>
+            </div>
+            <div>
+              <div class="meta-pill">합계 ${formatNumber(product.price * item.quantity)} 크래딧</div>
+            </div>
+          `;
+          cartList.appendChild(el);
+        });
+      }
+
+      const total = calculateCartTotal();
+      document.getElementById("summaryCredit").textContent = `${formatNumber(buyer.credit)} 크래딧`;
+      document.getElementById("summaryTotal").textContent = `${formatNumber(total)} 크래딧`;
+      document.getElementById("summaryAfter").textContent = `${formatNumber(buyer.credit - total)} 크래딧`;
+    }
+
+    function calculateCartTotal() {
+      const cart = getCart();
+      const products = getProducts();
+      return cart.reduce((sum, item) => {
+        const product = products.find(p => p.id === item.productId);
+        return sum + (product ? product.price * item.quantity : 0);
+      }, 0);
+    }
+
+    function changeCartQuantity(productId, diff) {
+      const cart = getCart();
+      const products = getProducts();
+      const product = products.find(p => p.id === productId);
+      const item = cart.find(i => i.productId === productId);
+
+      if (!product || !item) return;
+
+      const nextQty = item.quantity + diff;
+      if (nextQty <= 0) {
+        removeCartItem(productId);
+        return;
+      }
+
+      if (nextQty > product.stock) {
+        showMessage("재고 수량보다 많이 담을 수 없습니다.", "danger");
+        return;
+      }
+
+      item.quantity = nextQty;
+      setCart(cart);
+      renderAll();
+    }
+
+    function removeCartItem(productId) {
+      const cart = getCart().filter(item => item.productId !== productId);
+      setCart(cart);
+      renderAll();
+      showMessage("장바구니에서 삭제되었습니다.", "success");
+    }
+
+    function clearCart() {
+      const cart = getCart();
+      if (cart.length === 0) return;
+
+      const ok = confirm("장바구니를 모두 비우시겠습니까?");
+      if (!ok) return;
+
+      setCart([]);
+      renderAll();
+      showMessage("장바구니를 비웠습니다.", "success");
+    }
+
+    function checkout() {
+      const cart = getCart();
+      const buyer = getBuyer();
+      const products = getProducts();
+
+      if (cart.length === 0) {
+        showMessage("장바구니가 비어 있습니다.", "danger");
+        return;
+      }
+
+      const total = calculateCartTotal();
+
+      if (buyer.credit < total) {
+        showMessage("크래딧이 부족합니다.", "danger");
+        return;
+      }
+
+      for (const item of cart) {
+        const product = products.find(p => p.id === item.productId);
+        if (!product) {
+          showMessage("존재하지 않는 상품이 있습니다.", "danger");
+          return;
+        }
+        if (product.stock < item.quantity) {
+          showMessage(`"${product.name}"의 재고가 부족합니다.`, "danger");
+          return;
+        }
+      }
+
+      const purchaseItems = [];
+
+      cart.forEach(item => {
+        const product = products.find(p => p.id === item.productId);
+        product.stock -= item.quantity;
+        product.soldCount += item.quantity;
+        product.revenue += product.price * item.quantity;
+
+        purchaseItems.push({
+          productId: product.id,
+          name: product.name,
+          quantity: item.quantity,
+          price: product.price,
+          subtotal: product.price * item.quantity,
+          image: product.image || ""
+        });
+      });
+
+      buyer.credit -= total;
+
+      setProducts(products);
+      setBuyer(buyer);
+      setCart([]);
+      setLastPurchase({
+        items: purchaseItems,
+        totalSpent: total,
+        remainingCredit: buyer.credit,
+        itemCount: purchaseItems.reduce((sum, i) => sum + i.quantity, 0)
+      });
+
+      renderAll();
+      showPage("completePage");
+      showMessage("구매가 완료되었습니다.", "success");
+    }
+
+    function renderCompletePage() {
+      const data = getLastPurchase();
+
+      if (!data) {
+        document.getElementById("completeItemCount").textContent = "0개";
+        document.getElementById("completeTotalSpent").textContent = "0 크래딧";
+        document.getElementById("completeRemainingCredit").textContent = `${formatNumber(getBuyer().credit)} 크래딧`;
+        document.getElementById("completeItems").innerHTML = `<div class="empty-state">최근 구매 내역이 없습니다.</div>`;
+        return;
+      }
+
+      document.getElementById("completeItemCount").textContent = `${formatNumber(data.itemCount)}개`;
+      document.getElementById("completeTotalSpent").textContent = `${formatNumber(data.totalSpent)} 크래딧`;
+      document.getElementById("completeRemainingCredit").textContent = `${formatNumber(data.remainingCredit)} 크래딧`;
+
+      const wrapper = document.getElementById("completeItems");
+      wrapper.innerHTML = "";
+
+      data.items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "cart-item";
+        row.innerHTML = `
+          ${item.image
+            ? `<img src="${item.image}" alt="${item.name}" />`
+            : `<div class="placeholder">💝</div>`
+          }
+          <div>
+            <h4>${item.name}</h4>
+            <p>수량: ${formatNumber(item.quantity)}개</p>
+            <p>상품 가격: ${formatNumber(item.price)} 크래딧</p>
+          </div>
+          <div>
+            <div class="meta-pill">합계 ${formatNumber(item.subtotal)} 크래딧</div>
+          </div>
+        `;
+        wrapper.appendChild(row);
+      });
+    }
+
+    function resetAll() {
+      const ok = confirm("초기화하면 상품, 판매 기록, 장바구니, 랭킹 정보가 모두 삭제됩니다. 계속하시겠습니까?");
+      if (!ok) return;
+
+      localStorage.removeItem(STORAGE_KEYS.products);
+      localStorage.removeItem(STORAGE_KEYS.cart);
+      localStorage.removeItem(STORAGE_KEYS.buyer);
+      localStorage.removeItem(STORAGE_KEYS.lastPurchase);
+
+      init();
+      showPage("homePage");
+      showMessage("전체 데이터가 초기화되었습니다.", "success");
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
